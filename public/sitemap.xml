@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+    <sitemap>
+        <loc>https://darasahub.com/sitemaps/sitemap-static.xml</loc>
+            <lastmod>2026-11-23T09:24:39+00:00</lastmod>
+    </sitemap>
+    <sitemap>
+        <loc>https://darasahub.com/sitemaps/sitemap-term-landings.xml</loc>
+            <lastmod>2026-11-23T09:24:39+00:00</lastmod>
+    </sitemap>
+    <sitemap>
+        <loc>https://darasahub.com/sitemaps/sitemap-papers.xml</loc>
+            <lastmod>2026-11-23T09:24:39+00:00</lastmod>
+    </sitemap>
+</sitemapindex>
