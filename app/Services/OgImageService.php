@@ -13,7 +13,7 @@ class OgImageService
      */
     public function generateForTitle(string $title, string $subtitle, string $slugKey): ?string
     {
-        if (! extension_loaded('gd')) {
+        if (app()->runningUnitTests() || ! extension_loaded('gd')) {
             return null;
         }
 

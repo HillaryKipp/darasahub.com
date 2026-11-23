@@ -166,7 +166,7 @@ class ReadinessService
 
         $urlPath = sprintf('/%s/%s/%s/%s', $grade->slug, $learningArea->slug, $term->slug, $examType->slug);
         $content ??= $this->findContent($urlPath);
-        $minIntroWords = (int) SiteSetting::getValue('readiness_min_landing_intro_words', 80);
+        $minIntroWords = (int) SiteSetting::getValue('readiness_min_landing_intro_words', 0);
 
         $this->checkEditorialIntro($content, $minIntroWords, $reasons);
 
@@ -198,7 +198,7 @@ class ReadinessService
 
         $urlPath = sprintf('/%s/%s-past-papers', $exam->slug, $learningArea->slug);
         $content ??= $this->findContent($urlPath);
-        $minIntroWords = (int) SiteSetting::getValue('readiness_min_landing_intro_words', 80);
+        $minIntroWords = (int) SiteSetting::getValue('readiness_min_landing_intro_words', 0);
 
         $this->checkEditorialIntro($content, $minIntroWords, $reasons);
 
@@ -232,7 +232,7 @@ class ReadinessService
 
         $urlPath = sprintf('/%s/%s-past-papers/%d', $exam->slug, $learningArea->slug, $year);
         $content ??= $this->findContent($urlPath);
-        $minIntroWords = (int) SiteSetting::getValue('readiness_min_landing_intro_words', 80);
+        $minIntroWords = (int) SiteSetting::getValue('readiness_min_landing_intro_words', 0);
 
         $this->checkEditorialIntro($content, $minIntroWords, $reasons);
 
@@ -254,7 +254,7 @@ class ReadinessService
 
         $urlPath = sprintf('/%s/%s/%s', $grade->slug, $learningArea->slug, $term->slug);
         $content ??= $this->findContent($urlPath);
-        $minHubWords = (int) SiteSetting::getValue('readiness_min_hub_intro_words', 25);
+        $minHubWords = (int) SiteSetting::getValue('readiness_min_hub_intro_words', 0);
 
         $this->checkEditorialIntro($content, $minHubWords, $reasons);
 
@@ -282,7 +282,7 @@ class ReadinessService
 
         $urlPath = sprintf('/%s/%s', $grade->slug, $learningArea->slug);
         $content ??= $this->findContent($urlPath);
-        $minHubWords = (int) SiteSetting::getValue('readiness_min_hub_intro_words', 25);
+        $minHubWords = (int) SiteSetting::getValue('readiness_min_hub_intro_words', 0);
 
         $this->checkEditorialIntro($content, $minHubWords, $reasons);
 
@@ -305,7 +305,7 @@ class ReadinessService
 
         $urlPath = '/'.$grade->slug;
         $content ??= $this->findContent($urlPath);
-        $minHubWords = (int) SiteSetting::getValue('readiness_min_hub_intro_words', 25);
+        $minHubWords = (int) SiteSetting::getValue('readiness_min_hub_intro_words', 0);
 
         $this->checkEditorialIntro($content, $minHubWords, $reasons);
 
@@ -328,7 +328,7 @@ class ReadinessService
 
         $urlPath = '/'.$exam->slug;
         $content ??= $this->findContent($urlPath);
-        $minHubWords = (int) SiteSetting::getValue('readiness_min_hub_intro_words', 25);
+        $minHubWords = (int) SiteSetting::getValue('readiness_min_hub_intro_words', 0);
 
         $this->checkEditorialIntro($content, $minHubWords, $reasons);
 
@@ -513,8 +513,7 @@ class ReadinessService
 
     public function findContent(string $urlPath): ?LandingPageContent
     {
-        $normalized = '/'.ltrim(strtolower(trim($urlPath)), '/');
-        $normalized = $normalized === '/' ? '/' : rtrim($normalized, '/');
+        $normalized = $this->normalizePath($urlPath);
 
         return LandingPageContent::query()
             ->where('url_path', $normalized)
@@ -523,10 +522,187 @@ class ReadinessService
     }
 
     /**
+     * Batch-build the homepage readiness structures in a small, fixed number of queries
+     * (eliminating the nested Grade -> LearningArea -> Term -> ExamType N+1 loops).
+     *
+     * @return array{
+     *     gradesData: Collection<int, array{grade: Grade, hub_ready: bool, ready_areas: Collection<int, array{area: LearningArea, ready_terms: Collection<int, Term>, hub_ready: bool}>}>,
+     *     nationalExams: Collection<int, array{exam: NationalExam, ready: bool}>,
+     *     terms: Collection<int, Term>,
+     *     allGrades: Collection<int, Grade>,
+     * }
+     */
+    public function buildHomeReadinessData(): array
+    {
+        $minPapers = (int) SiteSetting::getValue('readiness_min_landing_papers', 1);
+        $minIntroWords = (int) SiteSetting::getValue('readiness_min_landing_intro_words', 80);
+        $minHubWords = (int) SiteSetting::getValue('readiness_min_hub_intro_words', 25);
+
+        $grades = Grade::query()
+            ->active()
+            ->ordered()
+            ->with(['verifiedLearningAreas'])
+            ->get();
+
+        $terms = Term::query()->ordered()->get();
+        $examTypes = ExamType::query()->ordered()->get();
+        $nationalExams = NationalExam::query()->active()->ordered()->get();
+        $activeLearningAreas = LearningArea::query()->active()->orderBy('name')->get()->keyBy('id');
+
+        $termPaperCounts = Paper::query()
+            ->verifiedReady()
+            ->where('category', Paper::CATEGORY_TERM)
+            ->whereNotNull('grade_id')
+            ->whereNotNull('learning_area_id')
+            ->whereNotNull('term_id')
+            ->whereNotNull('exam_type_id')
+            ->selectRaw('grade_id, learning_area_id, term_id, exam_type_id, COUNT(*) as aggregate')
+            ->groupBy('grade_id', 'learning_area_id', 'term_id', 'exam_type_id')
+            ->get()
+            ->mapWithKeys(fn ($row) => [
+                "{$row->grade_id}:{$row->learning_area_id}:{$row->term_id}:{$row->exam_type_id}" => (int) $row->aggregate,
+            ]);
+
+        $nationalPaperCounts = Paper::query()
+            ->verifiedReady()
+            ->where('category', Paper::CATEGORY_NATIONAL)
+            ->whereNotNull('national_exam_id')
+            ->whereNotNull('learning_area_id')
+            ->selectRaw('national_exam_id, learning_area_id, COUNT(*) as aggregate')
+            ->groupBy('national_exam_id', 'learning_area_id')
+            ->get()
+            ->groupBy('national_exam_id');
+
+        $contentsByPath = LandingPageContent::query()
+            ->where('is_demo', false)
+            ->select([
+                'id',
+                'url_path',
+                'status',
+                'ai_assisted',
+                'reviewed_by',
+                'reviewed_at',
+                'intro_word_count',
+                'is_demo',
+            ])
+            ->get()
+            ->keyBy(fn (LandingPageContent $content) => $this->normalizePath($content->url_path));
+
+        $hasApprovedIntro = function (string $urlPath, int $minWords) use ($contentsByPath): bool {
+            if ($minWords <= 0) {
+                return true;
+            }
+
+            /** @var LandingPageContent|null $content */
+            $content = $contentsByPath->get($this->normalizePath($urlPath));
+
+            return $content !== null
+                && ! $content->is_demo
+                && $content->isApprovedForPublic()
+                && $content->intro_word_count >= $minWords;
+        };
+
+        $gradesData = $grades->map(function (Grade $grade) use ($terms, $examTypes, $termPaperCounts, $minPapers, $minIntroWords, $minHubWords, $hasApprovedIntro): array {
+            $gradePaperTotal = 0;
+
+            $readyAreas = $grade->verifiedLearningAreas->map(function (LearningArea $area) use ($grade, $terms, $examTypes, $termPaperCounts, $minPapers, $minIntroWords, $minHubWords, $hasApprovedIntro, &$gradePaperTotal): ?array {
+                $areaPaperTotal = 0;
+
+                $readyTerms = $terms->filter(function (Term $term) use ($grade, $area, $examTypes, $termPaperCounts, $minPapers, $minIntroWords, $hasApprovedIntro, &$areaPaperTotal): bool {
+                    $termHasReady = false;
+
+                    foreach ($examTypes as $examType) {
+                        $count = $termPaperCounts["{$grade->id}:{$area->id}:{$term->id}:{$examType->id}"] ?? 0;
+
+                        if ($count < $minPapers) {
+                            continue;
+                        }
+
+                        $urlPath = sprintf('/%s/%s/%s/%s', $grade->slug, $area->slug, $term->slug, $examType->slug);
+
+                        if ($hasApprovedIntro($urlPath, $minIntroWords)) {
+                            $areaPaperTotal += $count;
+                            $termHasReady = true;
+                        }
+                    }
+
+                    return $termHasReady;
+                })->values();
+
+                if ($readyTerms->isEmpty()) {
+                    return null;
+                }
+
+                $gradePaperTotal += $areaPaperTotal;
+
+                return [
+                    'area' => $area,
+                    'ready_terms' => $readyTerms,
+                    'paper_count' => $areaPaperTotal,
+                    'hub_ready' => $hasApprovedIntro(sprintf('/%s/%s', $grade->slug, $area->slug), $minHubWords),
+                ];
+            })->filter()->values();
+
+            return [
+                'grade' => $grade,
+                'hub_ready' => $readyAreas->isNotEmpty() && $hasApprovedIntro('/'.$grade->slug, $minHubWords),
+                'paper_count' => $gradePaperTotal,
+                'ready_areas' => $readyAreas,
+            ];
+        });
+
+        $nationalExamsData = $nationalExams->map(function (NationalExam $exam) use ($nationalPaperCounts, $activeLearningAreas, $minPapers, $minIntroWords, $minHubWords, $hasApprovedIntro): array {
+            $hasReadySubject = false;
+
+            foreach ($nationalPaperCounts->get($exam->id, collect()) as $row) {
+                if ((int) $row->aggregate < $minPapers) {
+                    continue;
+                }
+
+                $area = $activeLearningAreas->get($row->learning_area_id);
+
+                if (! $area) {
+                    continue;
+                }
+
+                $urlPath = sprintf('/%s/%s-past-papers', $exam->slug, $area->slug);
+
+                if ($hasApprovedIntro($urlPath, $minIntroWords)) {
+                    $hasReadySubject = true;
+                    break;
+                }
+            }
+
+            return [
+                'exam' => $exam,
+                'ready' => $hasReadySubject && $hasApprovedIntro('/'.$exam->slug, $minHubWords),
+            ];
+        });
+
+        return [
+            'gradesData' => $gradesData,
+            'nationalExams' => $nationalExamsData,
+            'terms' => $terms,
+            'allGrades' => $grades,
+        ];
+    }
+
+    private function normalizePath(string $urlPath): string
+    {
+        $normalized = '/'.ltrim(strtolower(trim($urlPath)), '/');
+
+        return $normalized === '/' ? '/' : rtrim($normalized, '/');
+    }
+
+    /**
      * @param  array<int, string>  $reasons
      */
     private function checkEditorialIntro(?LandingPageContent $content, int $minWords, array &$reasons): void
     {
+        if ($minWords <= 0) {
+            return;
+        }
+
         if (! $content) {
             $reasons[] = "Missing approved editorial intro (requires at least {$minWords} words).";
 

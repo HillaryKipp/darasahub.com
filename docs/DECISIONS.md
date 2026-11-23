@@ -85,7 +85,7 @@ Per Section 4 (Content Integrity), only user-supplied official curriculum mappin
 ## 5. Non-Negotiable Content Integrity & Readiness Decisions
 
 1. **Demo Isolation**: Every factory/seeder demo paper sets `is_demo = true`. Public queries, sitemaps, search, and `ReadinessService` hard-exclude `is_demo = true` records so they can never be published or rendered publicly.
-2. **Single Readiness Gate**: `App\Services\ReadinessService::evaluate($subject)` is the sole gatekeeper for `robots` meta, XML sitemap inclusion, Filament publish actions, public hub/homepage links, and the readiness dashboard.
+2. **Single Readiness Gate**: `App\Services\ReadinessService::evaluate($subject)` is the sole gatekeeper for `robots` meta, XML sitemap inclusion, Filament publish actions, public hub/homepage links, and the readiness dashboard. Per owner instruction, `readiness_min_landing_intro_words` and `readiness_min_hub_intro_words` default to `0` (optional editorial intro) so pages with verified, published, permitted non-demo papers are immediately live and browsable; thresholds remain configurable in `site_settings`.
 3. **No Auto-Publishing**: CSV/Excel imports always stage a preview in `import_jobs` and commit records as `publication_status = draft`, `verification_status = unverified`.
 4. **AI-Assisted Content Flag**: `landing_page_content.ai_assisted` requires human review (`reviewed_by`, `reviewed_at`, `status = approved`) before it satisfies readiness.
 5. **No SSH Maintenance Route**: Disabled by default (`MAINTENANCE_ROUTE_ENABLED=false`), gated by a long expiring token + IP allowlist + fixed command allowlist, and every invocation writes to `audit_logs`.

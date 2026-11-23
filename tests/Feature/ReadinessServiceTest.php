@@ -46,7 +46,7 @@ class ReadinessServiceTest extends TestCase
         ]);
     }
 
-    public function test_term_landing_requires_verified_paper_and_approved_80_word_intro(): void
+    public function test_term_landing_requires_verified_paper_and_respects_optional_intro_threshold(): void
     {
         $readiness = app(ReadinessService::class);
         $grade = Grade::query()->where('slug', 'grade-5')->firstOrFail();
@@ -59,7 +59,7 @@ class ReadinessServiceTest extends TestCase
         $this->assertFalse($initial->ready);
         $this->assertSame('noindex, follow', $initial->robotsMeta());
 
-        // Add verified published paper -> still fails without approved 80-word intro
+        // Add verified published paper -> ready immediately when intro threshold is 0
         Paper::factory()->publishedReady()->create([
             'grade_id' => $grade->id,
             'learning_area_id' => $area->id,
@@ -68,22 +68,22 @@ class ReadinessServiceTest extends TestCase
             'year' => 2025,
         ]);
 
-        $withoutIntro = $readiness->evaluateTermLanding($grade, $area, $term, $examType);
-        $this->assertFalse($withoutIntro->ready);
+        $readyWithoutIntro = $readiness->evaluateTermLanding($grade, $area, $term, $examType);
+        $this->assertTrue($readyWithoutIntro->ready);
+        $this->assertSame('index, follow', $readyWithoutIntro->robotsMeta());
 
-        // Add approved 90-word intro -> passes readiness!
+        // If admin enables an 80-word intro threshold in SiteSetting, it is enforced
+        \App\Models\SiteSetting::setValue('readiness_min_landing_intro_words', 80, 'integer', 'readiness');
+        $this->assertFalse($readiness->evaluateTermLanding($grade, $area, $term, $examType)->ready);
+
         $reviewer = User::factory()->reviewer()->create();
-        $longIntro = implode(' ', array_fill(0, 90, 'curriculum'));
-
         LandingPageContent::factory()->approvedReady($reviewer)->create([
             'url_path' => '/grade-5/kiswahili/term-2/end-term-exams',
             'page_type' => LandingPageContent::TYPE_TERM_LANDING,
-            'intro' => $longIntro,
+            'intro' => implode(' ', array_fill(0, 90, 'curriculum')),
         ]);
 
-        $ready = $readiness->evaluateTermLanding($grade, $area, $term, $examType);
-        $this->assertTrue($ready->ready);
-        $this->assertSame('index, follow', $ready->robotsMeta());
+        $this->assertTrue($readiness->evaluateTermLanding($grade, $area, $term, $examType)->ready);
     }
 
     public function test_ai_assisted_intro_cannot_be_approved_without_human_reviewer(): void

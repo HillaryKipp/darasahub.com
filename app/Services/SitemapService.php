@@ -145,16 +145,32 @@ class SitemapService
     private function collectReadyTermLandingUrls(string $baseUrl): array
     {
         $urls = [];
-        $contents = LandingPageContent::query()
-            ->approved()
-            ->where('page_type', LandingPageContent::TYPE_TERM_LANDING)
+        $combos = Paper::query()
+            ->verifiedReady()
+            ->where('category', Paper::CATEGORY_TERM)
+            ->whereNotNull('grade_id')
+            ->whereNotNull('learning_area_id')
+            ->whereNotNull('term_id')
+            ->whereNotNull('exam_type_id')
+            ->select('grade_id', 'learning_area_id', 'term_id', 'exam_type_id')
+            ->distinct()
             ->get();
 
-        foreach ($contents as $content) {
-            if ($this->readiness->evaluate($content)->ready) {
+        $grades = Grade::query()->get()->keyBy('id');
+        $areas = LearningArea::query()->get()->keyBy('id');
+        $terms = Term::query()->get()->keyBy('id');
+        $examTypes = ExamType::query()->get()->keyBy('id');
+
+        foreach ($combos as $combo) {
+            $grade = $grades->get($combo->grade_id);
+            $area = $areas->get($combo->learning_area_id);
+            $term = $terms->get($combo->term_id);
+            $examType = $examTypes->get($combo->exam_type_id);
+
+            if ($grade && $area && $term && $examType && $this->readiness->evaluateTermLanding($grade, $area, $term, $examType)->ready) {
                 $urls[] = [
-                    'loc' => $baseUrl.$content->url_path,
-                    'lastmod' => $content->updated_at ?? now(),
+                    'loc' => "{$baseUrl}/{$grade->slug}/{$area->slug}/{$term->slug}/{$examType->slug}",
+                    'lastmod' => now(),
                 ];
             }
         }
@@ -168,19 +184,47 @@ class SitemapService
     private function collectReadyNationalLandingUrls(string $baseUrl): array
     {
         $urls = [];
-        $contents = LandingPageContent::query()
-            ->approved()
-            ->whereIn('page_type', [
-                LandingPageContent::TYPE_NATIONAL_SUBJECT,
-                LandingPageContent::TYPE_NATIONAL_YEAR,
-            ])
+        $exams = NationalExam::query()->active()->get()->keyBy('id');
+        $areas = LearningArea::query()->active()->get()->keyBy('id');
+
+        // Subject pages
+        $subjectCombos = Paper::query()
+            ->verifiedReady()
+            ->where('category', Paper::CATEGORY_NATIONAL)
+            ->whereNotNull('national_exam_id')
+            ->whereNotNull('learning_area_id')
+            ->select('national_exam_id', 'learning_area_id')
+            ->distinct()
             ->get();
 
-        foreach ($contents as $content) {
-            if ($this->readiness->evaluate($content)->ready) {
+        foreach ($subjectCombos as $combo) {
+            $exam = $exams->get($combo->national_exam_id);
+            $area = $areas->get($combo->learning_area_id);
+            if ($exam && $area && $this->readiness->evaluateNationalSubject($exam, $area)->ready) {
                 $urls[] = [
-                    'loc' => $baseUrl.$content->url_path,
-                    'lastmod' => $content->updated_at ?? now(),
+                    'loc' => "{$baseUrl}/{$exam->slug}/{$area->slug}-past-papers",
+                    'lastmod' => now(),
+                ];
+            }
+        }
+
+        // Year pages
+        $yearCombos = Paper::query()
+            ->verifiedReady()
+            ->where('category', Paper::CATEGORY_NATIONAL)
+            ->whereNotNull('national_exam_id')
+            ->whereNotNull('learning_area_id')
+            ->select('national_exam_id', 'learning_area_id', 'year')
+            ->distinct()
+            ->get();
+
+        foreach ($yearCombos as $combo) {
+            $exam = $exams->get($combo->national_exam_id);
+            $area = $areas->get($combo->learning_area_id);
+            if ($exam && $area && $this->readiness->evaluateNationalYear($exam, $area, (int) $combo->year)->ready) {
+                $urls[] = [
+                    'loc' => "{$baseUrl}/{$exam->slug}/{$area->slug}-past-papers/{$combo->year}",
+                    'lastmod' => now(),
                 ];
             }
         }
