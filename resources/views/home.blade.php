@@ -5,7 +5,7 @@
     <section class="bg-gradient-to-br from-brand-900 via-brand-800 to-brand-700 text-white text-center">
         <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-16">
             <h1 class="text-3xl sm:text-4xl font-extrabold tracking-tight max-w-3xl mx-auto">
-                Kenya CBC Past Papers, Term Assessments &amp; National Exams
+                Kenya CBC Past Papers, Term AssessmentsL &amp; National Exams
             </h1>
             <p class="mt-3 text-brand-100 max-w-2xl mx-auto text-base sm:text-lg">
                 Find verified question papers and marking schemes from PP1 to Grade 12, plus KPSEA, KILEA, KJSEA, and KCSE past papers.
