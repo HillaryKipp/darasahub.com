@@ -20,8 +20,8 @@ class LegalPageController extends Controller
     public function show(Request $request, string $page): View
     {
         $pages = [
-            'about' => ['About Us', 'Learn how DarasaHub organizes and verifies Kenyan CBC past papers and national exams.'],
-            'contact' => ['Contact Us', 'Get in touch with the DarasaHub editorial team for corrections, submissions, or inquiries.'],
+            'about' => ['About Us', 'Darasahub Holdings Limited is a leading African EdTech company designing, building, and managing digital learning platforms at scale.'],
+            'contact' => ['Contact Us', 'Contact Darasahub Holdings Limited for EdTech partnerships, platform delivery, curriculum corrections, or general inquiries.'],
             'privacy-policy' => ['Privacy Policy', 'DarasaHub privacy policy: minimal data collection designed for Kenyan learners and teachers.'],
             'terms' => ['Terms of Use', 'Terms and conditions for using DarasaHub educational resources.'],
             'editorial-policy' => ['Editorial & Verification Policy', 'How DarasaHub verifies exam papers, attributes sources, and maintains curriculum accuracy.'],
@@ -37,6 +37,35 @@ class LegalPageController extends Controller
             ['label' => $title, 'url' => null],
         ];
 
+        $contactEmail = (string) SiteSetting::getValue('contact_email', 'masomo@darasahub.com');
+        $contactPhone = (string) SiteSetting::getValue('contact_phone', '+254 734 232 994');
+        $contactAddress = (string) SiteSetting::getValue('contact_address', '1st Floor, Karen Professionals, P.O. Box 20904');
+
+        $schemas = [$this->seo->breadcrumbSchema($breadcrumbs)];
+        if (in_array($page, ['about', 'contact'], true)) {
+            $schemas[] = [
+                '@context' => 'https://schema.org',
+                '@type' => 'Organization',
+                'name' => 'Darasahub Holdings Limited',
+                'alternateName' => $this->seo->siteName(),
+                'url' => $this->seo->canonicalUrl($request, '/'),
+                'logo' => $this->seo->canonicalUrl($request, '/images/logo.png'),
+                'email' => $contactEmail,
+                'telephone' => $contactPhone,
+                'address' => [
+                    '@type' => 'PostalAddress',
+                    'streetAddress' => '1st Floor, Karen Professionals',
+                    'postOfficeBoxNumber' => '20904',
+                    'addressCountry' => 'KE',
+                ],
+                'sameAs' => [
+                    'https://play.google.com/store/apps/details?id=com.darasadrive.darasadrive_mobile',
+                    'https://cbcschemes.co.ke/',
+                    'https://easytvethub.com',
+                ],
+            ];
+        }
+
         $paper = null;
         if ($page === 'copyright-takedown' && $request->filled('paper')) {
             $paper = Paper::query()->publishedPublic()->find($request->integer('paper'));
@@ -44,7 +73,10 @@ class LegalPageController extends Controller
 
         return view('legal.'.$page, [
             'pageTitle' => $title,
-            'contactEmail' => (string) SiteSetting::getValue('contact_email', 'hello@darasahub.com'),
+            'contactEmail' => $contactEmail,
+            'contactPhone' => $contactPhone,
+            'contactPhoneHref' => 'tel:'.preg_replace('/[^+\d]/', '', $contactPhone),
+            'contactAddress' => $contactAddress,
             'siteName' => $this->seo->siteName(),
             'paper' => $paper,
             'breadcrumbs' => $breadcrumbs,
@@ -53,7 +85,7 @@ class LegalPageController extends Controller
                 'description' => $description,
                 'canonical' => $canonical,
                 'robots' => 'index, follow',
-                'schemas' => [$this->seo->breadcrumbSchema($breadcrumbs)],
+                'schemas' => $schemas,
             ],
         ]);
     }

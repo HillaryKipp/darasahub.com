@@ -70,11 +70,39 @@ class TermDirectoryController extends Controller
         $content = $this->readiness->findContent($path);
         $evaluation = $this->readiness->evaluateLearningAreaHub($grade, $area, $content);
 
-        $termsData = Term::query()->ordered()->get()->map(fn (Term $term) => [
-            'term' => $term,
-            'term_hub_ready' => $this->readiness->evaluateTermHub($grade, $area, $term)->ready,
-            'ready_exam_types' => $this->readiness->getReadyExamTypesForTerm($grade, $area, $term),
-        ])->filter(fn (array $row) => $row['ready_exam_types']->isNotEmpty())->values();
+        $allTerms = Term::query()->ordered()->get();
+        $allExamTypes = ExamType::query()->ordered()->get();
+
+        $areaPaperCounts = Paper::query()
+            ->verifiedReady()
+            ->where('category', Paper::CATEGORY_TERM)
+            ->where('grade_id', $grade->id)
+            ->where('learning_area_id', $area->id)
+            ->selectRaw('term_id, exam_type_id, COUNT(*) as aggregate')
+            ->groupBy('term_id', 'exam_type_id')
+            ->get()
+            ->mapWithKeys(fn ($row) => ["{$row->term_id}:{$row->exam_type_id}" => (int) $row->aggregate]);
+
+        $termsData = $allTerms->map(function (Term $term) use ($allExamTypes, $areaPaperCounts): array {
+            $termTotal = 0;
+            $examTypes = $allExamTypes->map(function (ExamType $examType) use ($term, $areaPaperCounts, &$termTotal): array {
+                $count = $areaPaperCounts["{$term->id}:{$examType->id}"] ?? 0;
+                $termTotal += $count;
+
+                return [
+                    'exam_type' => $examType,
+                    'available' => $count > 0,
+                    'count' => $count,
+                ];
+            })->values();
+
+            return [
+                'term' => $term,
+                'available' => $termTotal > 0,
+                'paper_count' => $termTotal,
+                'exam_types' => $examTypes,
+            ];
+        })->values();
 
         $canonical = $this->seo->canonicalUrl($request, $path);
         $breadcrumbs = [
@@ -122,6 +150,32 @@ class TermDirectoryController extends Controller
         $evaluation = $this->readiness->evaluateTermHub($grade, $area, $term, $content);
         $readyExamTypes = $this->readiness->getReadyExamTypesForTerm($grade, $area, $term);
 
+        $allExamTypes = ExamType::query()->ordered()->get();
+        $termPapers = Paper::query()
+            ->verifiedReady()
+            ->with(['grade', 'learningArea', 'term', 'examType', 'relatedPaper'])
+            ->where('category', Paper::CATEGORY_TERM)
+            ->where('grade_id', $grade->id)
+            ->where('learning_area_id', $area->id)
+            ->where('term_id', $term->id)
+            ->orderByDesc('year')
+            ->orderBy('title')
+            ->get();
+
+        $papersByExamType = $termPapers->groupBy('exam_type_id');
+        $examTypeSections = $allExamTypes->map(function (ExamType $examType) use ($papersByExamType): array {
+            $papers = $papersByExamType->get($examType->id, collect())->values();
+
+            return [
+                'exam_type' => $examType,
+                'available' => $papers->isNotEmpty(),
+                'count' => $papers->count(),
+                'papers' => $papers,
+            ];
+        })->values();
+
+        $gradeLearningAreas = $this->readiness->getReadyLearningAreasForGrade($grade);
+
         $canonical = $this->seo->canonicalUrl($request, $path);
         $breadcrumbs = [
             ['label' => 'Home', 'url' => $this->seo->canonicalUrl($request, '/')],
@@ -145,6 +199,9 @@ class TermDirectoryController extends Controller
             'term' => $term,
             'content' => $content,
             'readyExamTypes' => $readyExamTypes,
+            'examTypeSections' => $examTypeSections,
+            'gradeLearningAreas' => $gradeLearningAreas,
+            'totalPapers' => $termPapers->count(),
             'readiness' => $evaluation,
             'breadcrumbs' => $breadcrumbs,
             'h1' => $h1,
@@ -216,6 +273,23 @@ class TermDirectoryController extends Controller
             $schemas[] = $faq;
         }
 
+        $examTypeCounts = Paper::query()
+            ->verifiedReady()
+            ->where('category', Paper::CATEGORY_TERM)
+            ->where('grade_id', $grade->id)
+            ->where('learning_area_id', $area->id)
+            ->where('term_id', $term->id)
+            ->selectRaw('exam_type_id, COUNT(*) as aggregate')
+            ->groupBy('exam_type_id')
+            ->pluck('aggregate', 'exam_type_id');
+
+        $examTypeButtons = ExamType::query()->ordered()->get()->map(fn (ExamType $et) => [
+            'exam_type' => $et,
+            'available' => ((int) ($examTypeCounts[$et->id] ?? 0)) > 0,
+            'active' => $et->id === $examType->id,
+            'count' => (int) ($examTypeCounts[$et->id] ?? 0),
+        ])->values();
+
         return view('directory.term-landing', [
             'grade' => $grade,
             'area' => $area,
@@ -223,7 +297,7 @@ class TermDirectoryController extends Controller
             'examType' => $examType,
             'content' => $content,
             'papers' => $papers,
-            'internalLinks' => $this->internalLinks->forTermLanding($grade, $area, $term, $examType),
+            'examTypeButtons' => $examTypeButtons,
             'readiness' => $evaluation,
             'breadcrumbs' => $breadcrumbs,
             'h1' => $h1,

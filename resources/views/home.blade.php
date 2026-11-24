@@ -118,7 +118,6 @@
                         <details
                             class="grade-accordion bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden group/grade"
                             x-show="filter.trim() === '' || {{ json_encode($searchIndex) }}.includes(filter.trim().toLowerCase())"
-                            @if($loop->first) open @endif
                         >
                             {{-- Level 1: Grade Dropdown Header --}}
                             <summary class="px-5 py-4 flex items-center justify-between cursor-pointer select-none bg-white hover:bg-brand-50/50 transition border-l-4 border-brand-700">
@@ -144,17 +143,23 @@
 
                             {{-- Level 2: Nested Learning Areas Dropdowns --}}
                             <div class="px-4 sm:px-5 pb-4 pt-3 bg-slate-50/70 border-t border-slate-200 space-y-2">
-                                @if($row['hub_ready'])
-                                    <div class="flex items-center justify-between pb-2 mb-1 border-b border-slate-200/80 text-xs">
-                                        <span class="text-slate-500">Click any learning area below to view available terms</span>
-                                        <a href="/{{ $grade->slug }}" class="font-semibold text-brand-700 hover:underline">
-                                            Open {{ $grade->name }} Hub &rarr;
-                                        </a>
-                                    </div>
-                                @endif
+                                <div class="flex flex-wrap items-center justify-between gap-2 pb-2 mb-1 border-b border-slate-200/80 text-xs text-slate-500">
+                                    <span>Expand a learning area to view Term 1, Term 2, and Term 3 availability</span>
+                                    <span class="inline-flex items-center gap-3 text-[11px]">
+                                        <span class="inline-flex items-center gap-1.5 text-brand-800 font-medium">
+                                            <span class="inline-block w-2 h-2 rounded-full bg-brand-700"></span>
+                                            Available
+                                        </span>
+                                        <span class="inline-flex items-center gap-1.5 text-slate-400">
+                                            <span class="inline-block w-2 h-2 rounded-full bg-slate-300"></span>
+                                            No papers yet
+                                        </span>
+                                    </span>
+                                </div>
 
                                 @foreach($row['ready_areas'] as $areaRow)
                                     @php($area = $areaRow['area'])
+                                    @php($readyTermIds = $areaRow['ready_terms']->pluck('id')->all())
                                     <details class="bg-white border border-slate-200 rounded-lg overflow-hidden group/area">
                                         <summary class="px-4 py-3 flex items-center justify-between cursor-pointer select-none hover:bg-slate-50 transition">
                                             <div class="flex flex-wrap items-center gap-2">
@@ -168,24 +173,17 @@
                                             </svg>
                                         </summary>
 
-                                        {{-- Level 3: Ready Terms & Hub Links --}}
-                                        <div class="px-4 py-3 bg-brand-50/30 border-t border-slate-100 flex flex-wrap items-center justify-between gap-2">
-                                            <div class="flex flex-wrap items-center gap-2">
-                                                @foreach($areaRow['ready_terms'] as $term)
-                                                    <a
-                                                        href="/{{ $grade->slug }}/{{ $area->slug }}/{{ $term->slug }}"
-                                                        class="inline-flex items-center gap-1 px-3 py-1.5 rounded-md bg-white border border-brand-600/30 text-xs font-semibold text-brand-800 hover:bg-brand-700 hover:text-white hover:border-brand-700 transition shadow-xs"
-                                                    >
-                                                        <span>{{ $term->name }} Exams</span>
-                                                        <span aria-hidden="true">&rarr;</span>
-                                                    </a>
-                                                @endforeach
-                                            </div>
-                                            @if($areaRow['hub_ready'])
-                                                <a href="/{{ $grade->slug }}/{{ $area->slug }}" class="text-xs font-medium text-slate-600 hover:text-brand-700 hover:underline">
-                                                    All {{ $area->name }} &rarr;
-                                                </a>
-                                            @endif
+                                        {{-- Level 3: All Terms (Term 1, Term 2, Term 3) with Checked/Unchecked Availability --}}
+                                        <div class="px-4 py-3 bg-brand-50/30 border-t border-slate-100 flex flex-wrap items-center gap-2.5">
+                                            @foreach($terms as $term)
+                                                @php($termAvailable = in_array($term->id, $readyTermIds, true))
+                                                @include('partials.status-check-button', [
+                                                    'label' => $term->name.' Exams',
+                                                    'checked' => $termAvailable,
+                                                    'href' => $termAvailable ? "/{$grade->slug}/{$area->slug}/{$term->slug}" : null,
+                                                    'unavailableText' => "No verified {$grade->name} {$area->name} {$term->name} assessments yet",
+                                                ])
+                                            @endforeach
                                         </div>
                                     </details>
                                 @endforeach

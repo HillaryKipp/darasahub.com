@@ -409,25 +409,53 @@ class ReadinessService
      */
     public function getReadyExamTypesForTerm(Grade $grade, LearningArea $learningArea, Term $term): Collection
     {
+        if ($grade->is_demo || ! $grade->is_active || $learningArea->is_demo || ! $learningArea->is_active) {
+            return collect();
+        }
+
+        $verifiedPivot = GradeLearningArea::query()
+            ->where('grade_id', $grade->id)
+            ->where('learning_area_id', $learningArea->id)
+            ->verified()
+            ->exists();
+
+        if (! $verifiedPivot) {
+            return collect();
+        }
+
+        $minPapers = max(1, (int) SiteSetting::getValue('readiness_min_landing_papers', 1));
+        $minIntroWords = (int) SiteSetting::getValue('readiness_min_landing_intro_words', 0);
+
         $candidateIds = Paper::query()
             ->verifiedReady()
             ->where('category', Paper::CATEGORY_TERM)
             ->where('grade_id', $grade->id)
             ->where('learning_area_id', $learningArea->id)
             ->where('term_id', $term->id)
-            ->distinct()
-            ->pluck('exam_type_id')
-            ->filter();
+            ->whereNotNull('exam_type_id')
+            ->selectRaw('exam_type_id, COUNT(*) as aggregate')
+            ->groupBy('exam_type_id')
+            ->havingRaw('COUNT(*) >= ?', [$minPapers])
+            ->pluck('exam_type_id');
 
         if ($candidateIds->isEmpty()) {
             return collect();
         }
 
-        return ExamType::query()
+        $examTypes = ExamType::query()
             ->whereIn('id', $candidateIds)
             ->ordered()
-            ->get()
-            ->filter(fn (ExamType $examType) => $this->evaluateTermLanding($grade, $learningArea, $term, $examType)->ready)
+            ->get();
+
+        if ($minIntroWords <= 0) {
+            return $examTypes->values();
+        }
+
+        $paths = $examTypes->map(fn (ExamType $et) => $this->normalizePath(sprintf('/%s/%s/%s/%s', $grade->slug, $learningArea->slug, $term->slug, $et->slug)))->all();
+        $approvedPaths = $this->approvedContentPaths($paths, $minIntroWords);
+
+        return $examTypes
+            ->filter(fn (ExamType $et) => isset($approvedPaths[$this->normalizePath(sprintf('/%s/%s/%s/%s', $grade->slug, $learningArea->slug, $term->slug, $et->slug))]))
             ->values();
     }
 
@@ -436,26 +464,62 @@ class ReadinessService
      */
     public function getReadyLearningAreasForGrade(Grade $grade): Collection
     {
-        $candidateAreaIds = Paper::query()
-            ->verifiedReady()
-            ->where('category', Paper::CATEGORY_TERM)
-            ->where('grade_id', $grade->id)
-            ->distinct()
-            ->pluck('learning_area_id')
-            ->filter();
-
-        if ($candidateAreaIds->isEmpty()) {
+        if ($grade->is_demo || ! $grade->is_active) {
             return collect();
         }
 
-        $terms = Term::query()->ordered()->get();
+        $minPapers = max(1, (int) SiteSetting::getValue('readiness_min_landing_papers', 1));
+        $minIntroWords = (int) SiteSetting::getValue('readiness_min_landing_intro_words', 0);
 
-        return $grade->verifiedLearningAreas()
+        $qualifyingRows = Paper::query()
+            ->verifiedReady()
+            ->where('category', Paper::CATEGORY_TERM)
+            ->where('grade_id', $grade->id)
+            ->whereNotNull('learning_area_id')
+            ->whereNotNull('term_id')
+            ->whereNotNull('exam_type_id')
+            ->selectRaw('learning_area_id, term_id, exam_type_id, COUNT(*) as aggregate')
+            ->groupBy('learning_area_id', 'term_id', 'exam_type_id')
+            ->havingRaw('COUNT(*) >= ?', [$minPapers])
+            ->get();
+
+        if ($qualifyingRows->isEmpty()) {
+            return collect();
+        }
+
+        $candidateAreaIds = $qualifyingRows->pluck('learning_area_id')->unique()->values();
+        $areas = $grade->verifiedLearningAreas()
             ->whereIn('learning_areas.id', $candidateAreaIds)
-            ->get()
-            ->filter(function (LearningArea $area) use ($grade, $terms): bool {
-                foreach ($terms as $term) {
-                    if ($this->getReadyExamTypesForTerm($grade, $area, $term)->isNotEmpty()) {
+            ->get();
+
+        if ($minIntroWords <= 0) {
+            return $areas->values();
+        }
+
+        $termsById = Term::query()->ordered()->get()->keyBy('id');
+        $examTypesById = ExamType::query()->ordered()->get()->keyBy('id');
+        $areasById = $areas->keyBy('id');
+
+        $paths = [];
+        $areaPaths = [];
+        foreach ($qualifyingRows as $row) {
+            $area = $areasById->get($row->learning_area_id);
+            $term = $termsById->get($row->term_id);
+            $examType = $examTypesById->get($row->exam_type_id);
+            if (! $area || ! $term || ! $examType) {
+                continue;
+            }
+            $path = $this->normalizePath(sprintf('/%s/%s/%s/%s', $grade->slug, $area->slug, $term->slug, $examType->slug));
+            $paths[] = $path;
+            $areaPaths[$area->id][] = $path;
+        }
+
+        $approvedPaths = $this->approvedContentPaths(array_values(array_unique($paths)), $minIntroWords);
+
+        return $areas
+            ->filter(function (LearningArea $area) use ($areaPaths, $approvedPaths): bool {
+                foreach ($areaPaths[$area->id] ?? [] as $path) {
+                    if (isset($approvedPaths[$path])) {
                         return true;
                     }
                 }
@@ -470,24 +534,42 @@ class ReadinessService
      */
     public function getReadySubjectsForNationalExam(NationalExam $exam): Collection
     {
+        if ($exam->is_demo || ! $exam->is_active) {
+            return collect();
+        }
+
+        $minPapers = max(1, (int) SiteSetting::getValue('readiness_min_landing_papers', 1));
+        $minIntroWords = (int) SiteSetting::getValue('readiness_min_landing_intro_words', 0);
+
         $areaIds = Paper::query()
             ->verifiedReady()
             ->where('category', Paper::CATEGORY_NATIONAL)
             ->where('national_exam_id', $exam->id)
-            ->distinct()
-            ->pluck('learning_area_id')
-            ->filter();
+            ->whereNotNull('learning_area_id')
+            ->selectRaw('learning_area_id, COUNT(*) as aggregate')
+            ->groupBy('learning_area_id')
+            ->havingRaw('COUNT(*) >= ?', [$minPapers])
+            ->pluck('learning_area_id');
 
         if ($areaIds->isEmpty()) {
             return collect();
         }
 
-        return LearningArea::query()
+        $areas = LearningArea::query()
             ->active()
             ->whereIn('id', $areaIds)
             ->orderBy('name')
-            ->get()
-            ->filter(fn (LearningArea $area) => $this->evaluateNationalSubject($exam, $area)->ready)
+            ->get();
+
+        if ($minIntroWords <= 0) {
+            return $areas->values();
+        }
+
+        $paths = $areas->map(fn (LearningArea $a) => $this->normalizePath(sprintf('/%s/%s-past-papers', $exam->slug, $a->slug)))->all();
+        $approvedPaths = $this->approvedContentPaths($paths, $minIntroWords);
+
+        return $areas
+            ->filter(fn (LearningArea $a) => isset($approvedPaths[$this->normalizePath(sprintf('/%s/%s-past-papers', $exam->slug, $a->slug))]))
             ->values();
     }
 
@@ -496,19 +578,57 @@ class ReadinessService
      */
     public function getReadyYearsForNationalSubject(NationalExam $exam, LearningArea $learningArea): Collection
     {
+        if ($exam->is_demo || ! $exam->is_active || $learningArea->is_demo || ! $learningArea->is_active) {
+            return collect();
+        }
+
+        $minPapers = max(1, (int) SiteSetting::getValue('readiness_min_landing_papers', 1));
+        $minIntroWords = (int) SiteSetting::getValue('readiness_min_landing_intro_words', 0);
+
         $years = Paper::query()
             ->verifiedReady()
             ->where('category', Paper::CATEGORY_NATIONAL)
             ->where('national_exam_id', $exam->id)
             ->where('learning_area_id', $learningArea->id)
-            ->distinct()
+            ->whereNotNull('year')
+            ->selectRaw('year, COUNT(*) as aggregate')
+            ->groupBy('year')
+            ->havingRaw('COUNT(*) >= ?', [$minPapers])
             ->orderByDesc('year')
-            ->pluck('year');
+            ->pluck('year')
+            ->map(fn ($year) => (int) $year);
+
+        if ($years->isEmpty() || $minIntroWords <= 0) {
+            return $years->values();
+        }
+
+        $paths = $years->map(fn (int $yr) => $this->normalizePath(sprintf('/%s/%s-past-papers/%d', $exam->slug, $learningArea->slug, $yr)))->all();
+        $approvedPaths = $this->approvedContentPaths($paths, $minIntroWords);
 
         return $years
-            ->filter(fn ($year) => $this->evaluateNationalYear($exam, $learningArea, (int) $year)->ready)
-            ->map(fn ($year) => (int) $year)
+            ->filter(fn (int $yr) => isset($approvedPaths[$this->normalizePath(sprintf('/%s/%s-past-papers/%d', $exam->slug, $learningArea->slug, $yr))]))
             ->values();
+    }
+
+    /**
+     * Batch-resolve which URL paths have an approved, non-demo editorial intro meeting the word threshold.
+     *
+     * @param  array<int, string>  $paths
+     * @return array<string, true>
+     */
+    private function approvedContentPaths(array $paths, int $minWords): array
+    {
+        if ($paths === []) {
+            return [];
+        }
+
+        return LandingPageContent::query()
+            ->where('is_demo', false)
+            ->whereIn('url_path', $paths)
+            ->get(['url_path', 'status', 'ai_assisted', 'reviewed_by', 'reviewed_at', 'intro_word_count', 'is_demo'])
+            ->filter(fn (LandingPageContent $c) => $c->isApprovedForPublic() && $c->intro_word_count >= $minWords)
+            ->mapWithKeys(fn (LandingPageContent $c) => [$this->normalizePath($c->url_path) => true])
+            ->all();
     }
 
     public function findContent(string $urlPath): ?LandingPageContent

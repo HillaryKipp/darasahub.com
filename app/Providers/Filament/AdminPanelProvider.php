@@ -27,6 +27,9 @@ class AdminPanelProvider extends PanelProvider
             ->path('admin')
             ->login()
             ->brandName('DarasaHub Admin')
+            ->brandLogo(fn () => asset('images/logo.png'))
+            ->brandLogoHeight('2.5rem')
+            ->favicon(fn () => asset('favicon.ico'))
             ->colors([
                 'primary' => Color::Emerald,
             ])

@@ -68,6 +68,16 @@ class NationalExamController extends Controller
         $content = $this->readiness->findContent($path);
         $evaluation = $this->readiness->evaluateNationalSubject($exam, $area, $content);
         $readyYears = $this->readiness->getReadyYearsForNationalSubject($exam, $area);
+        $readySubjects = $this->readiness->getReadySubjectsForNationalExam($exam);
+
+        $yearCounts = Paper::query()
+            ->verifiedReady()
+            ->where('category', Paper::CATEGORY_NATIONAL)
+            ->where('national_exam_id', $exam->id)
+            ->where('learning_area_id', $area->id)
+            ->selectRaw('year, COUNT(*) as aggregate')
+            ->groupBy('year')
+            ->pluck('aggregate', 'year');
 
         $papers = Paper::query()
             ->verifiedReady()
@@ -77,7 +87,8 @@ class NationalExamController extends Controller
             ->where('learning_area_id', $area->id)
             ->orderByDesc('year')
             ->orderBy('paper_number')
-            ->paginate(20);
+            ->orderBy('file_type')
+            ->paginate(30);
 
         $canonical = $this->seo->canonicalUrl($request, $path, $papers->currentPage());
         $breadcrumbs = [
@@ -108,8 +119,9 @@ class NationalExamController extends Controller
             'area' => $area,
             'content' => $content,
             'readyYears' => $readyYears,
+            'yearCounts' => $yearCounts,
+            'readySubjects' => $readySubjects,
             'papers' => $papers,
-            'internalLinks' => $this->internalLinks->forNationalPage($exam, $area),
             'readiness' => $evaluation,
             'breadcrumbs' => $breadcrumbs,
             'h1' => $h1,
@@ -141,10 +153,21 @@ class NationalExamController extends Controller
             ->where('learning_area_id', $area->id)
             ->where('year', $year)
             ->orderBy('paper_number')
-            ->paginate(20);
+            ->orderBy('file_type')
+            ->paginate(30);
 
         $readyYears = $this->readiness->getReadyYearsForNationalSubject($exam, $area);
         $adjacentYears = $readyYears->filter(fn (int $y) => $y !== $year)->values();
+        $readySubjects = $this->readiness->getReadySubjectsForNationalExam($exam);
+
+        $yearCounts = Paper::query()
+            ->verifiedReady()
+            ->where('category', Paper::CATEGORY_NATIONAL)
+            ->where('national_exam_id', $exam->id)
+            ->where('learning_area_id', $area->id)
+            ->selectRaw('year, COUNT(*) as aggregate')
+            ->groupBy('year')
+            ->pluck('aggregate', 'year');
 
         $canonical = $this->seo->canonicalUrl($request, $path, $papers->currentPage());
         $breadcrumbs = [
@@ -177,8 +200,10 @@ class NationalExamController extends Controller
             'year' => $year,
             'content' => $content,
             'papers' => $papers,
+            'readyYears' => $readyYears,
+            'yearCounts' => $yearCounts,
             'adjacentYears' => $adjacentYears,
-            'internalLinks' => $this->internalLinks->forNationalPage($exam, $area, $year),
+            'readySubjects' => $readySubjects,
             'readiness' => $evaluation,
             'breadcrumbs' => $breadcrumbs,
             'h1' => $h1,

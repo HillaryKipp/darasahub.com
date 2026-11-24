@@ -46,6 +46,7 @@ class SeoMetaService
             '@type' => 'Organization',
             'name' => $this->siteName(),
             'url' => 'https://'.$host,
+            'logo' => 'https://'.$host.'/images/logo.png',
             'description' => (string) SiteSetting::getValue('site_tagline', 'Kenya CBC Past Papers, Assessments & National Exams Directory'),
         ];
     }

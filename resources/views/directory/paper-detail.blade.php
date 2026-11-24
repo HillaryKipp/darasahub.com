@@ -70,20 +70,39 @@
         @endif
 
         <div class="mt-8 flex flex-wrap items-center gap-3">
+            @if($paper->view_url && $paper->hasWorkingResource())
+                <a
+                    href="{{ $paper->view_url }}"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    class="inline-flex items-center justify-center gap-2 px-5 py-3 rounded-lg border border-brand-700 text-brand-800 bg-white hover:bg-brand-50 font-semibold text-sm transition"
+                >
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                    </svg>
+                    <span>Open {{ $paper->file_type === \App\Models\Paper::FILE_TYPE_MARKING_SCHEME ? 'Marking Scheme' : 'Question Paper' }}</span>
+                </a>
+            @endif
+
             @if($paper->hasWorkingResource())
                 <a
                     href="/download/{{ $paper->id }}"
                     rel="nofollow"
-                    class="inline-flex items-center justify-center px-6 py-3 rounded-lg bg-brand-700 hover:bg-brand-800 text-white font-semibold text-sm shadow-sm transition"
+                    class="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-lg bg-brand-700 hover:bg-brand-800 text-white font-semibold text-sm shadow-sm transition"
                 >
-                    Download {{ $paper->file_type === \App\Models\Paper::FILE_TYPE_MARKING_SCHEME ? 'Marking Scheme' : 'Question Paper' }}
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                    </svg>
+                    <span>Download {{ $paper->file_type === \App\Models\Paper::FILE_TYPE_MARKING_SCHEME ? 'Marking Scheme' : 'Question Paper' }}</span>
                 </a>
             @endif
 
-            @if($paper->relatedPaper && $paper->relatedPaper->isVerifiedReady() && $paper->relatedPaper->url_path)
+            @if($paper->relatedPaper && $paper->relatedPaper->isVerifiedReady() && $paper->relatedPaper->view_url)
                 <a
-                    href="{{ $paper->relatedPaper->url_path }}"
-                    class="inline-flex items-center justify-center px-5 py-3 rounded-lg border border-brand-700 text-brand-800 hover:bg-brand-50 font-semibold text-sm transition"
+                    href="{{ $paper->relatedPaper->view_url }}"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    class="inline-flex items-center justify-center px-5 py-3 rounded-lg border border-slate-300 text-slate-700 hover:bg-slate-50 font-semibold text-sm transition"
                 >
                     Open {{ $paper->relatedPaper->file_type === \App\Models\Paper::FILE_TYPE_MARKING_SCHEME ? 'Marking Scheme' : 'Question Paper' }}
                 </a>
@@ -97,20 +116,20 @@
             </a>
         </div>
 
-        @if($paper->hasWorkingResource() && str_ends_with(strtolower((string) $paper->file_url), '.pdf'))
-            <div x-data="{ showPreview: false }" class="mt-8 border-t border-slate-200 pt-6">
+        @if($paper->hasWorkingResource() && $paper->preview_url)
+            <div x-data="{ showPreview: true }" class="mt-8 border-t border-slate-200 pt-6">
                 <button
                     type="button"
                     @click="showPreview = !showPreview"
                     class="text-sm font-semibold text-brand-700 hover:underline"
                 >
-                    <span x-show="!showPreview">Load PDF Preview</span>
-                    <span x-show="showPreview" x-cloak>Hide PDF Preview</span>
+                    <span x-show="!showPreview" x-cloak>Show PDF Preview</span>
+                    <span x-show="showPreview">Hide PDF Preview</span>
                 </button>
                 <template x-if="showPreview">
                     <div class="mt-4 rounded-xl overflow-hidden border border-slate-200 bg-slate-100">
                         <iframe
-                            src="{{ $paper->file_url }}"
+                            src="{{ $paper->preview_url }}"
                             title="PDF preview for {{ $paper->title }}"
                             loading="lazy"
                             class="w-full h-[640px]"

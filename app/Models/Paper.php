@@ -237,6 +237,88 @@ class Paper extends Model
         return null;
     }
 
+    public function getBundleUrlAttribute(): ?string
+    {
+        if ($this->category === self::CATEGORY_TERM) {
+            if ($this->grade && $this->learningArea && $this->term) {
+                return sprintf(
+                    '/%s/%s/%s',
+                    $this->grade->slug,
+                    $this->learningArea->slug,
+                    $this->term->slug
+                );
+            }
+        }
+
+        if ($this->category === self::CATEGORY_NATIONAL) {
+            if ($this->nationalExam && $this->learningArea && $this->year) {
+                return sprintf(
+                    '/%s/%s-past-papers/%d',
+                    $this->nationalExam->slug,
+                    $this->learningArea->slug,
+                    $this->year
+                );
+            }
+        }
+
+        return $this->url_path;
+    }
+
+    public function getViewUrlAttribute(): ?string
+    {
+        $driveId = $this->resolveGoogleDriveFileId();
+        if ($driveId !== null) {
+            return "https://drive.google.com/file/d/{$driveId}/view";
+        }
+
+        if (! empty($this->source_url) && str_contains($this->source_url, 'drive.google.com')) {
+            return $this->source_url;
+        }
+
+        if (! empty($this->file_url)) {
+            return $this->file_url;
+        }
+
+        return $this->url_path;
+    }
+
+    public function getPreviewUrlAttribute(): ?string
+    {
+        $driveId = $this->resolveGoogleDriveFileId();
+        if ($driveId !== null) {
+            return "https://drive.google.com/file/d/{$driveId}/preview";
+        }
+
+        if (! empty($this->file_url) && str_ends_with(strtolower((string) $this->file_url), '.pdf')) {
+            return $this->file_url;
+        }
+
+        return null;
+    }
+
+    private function resolveGoogleDriveFileId(): ?string
+    {
+        if ($this->provider === self::PROVIDER_GOOGLE_DRIVE && ! empty($this->external_file_id)) {
+            return trim((string) $this->external_file_id);
+        }
+
+        foreach ([(string) $this->file_url, (string) $this->source_url] as $candidate) {
+            if ($candidate === '' || ! str_contains($candidate, 'drive.google.com')) {
+                continue;
+            }
+
+            if (preg_match('#/file/d/([a-zA-Z0-9_-]+)#', $candidate, $matches) === 1) {
+                return $matches[1];
+            }
+
+            if (preg_match('#[?&]id=([a-zA-Z0-9_-]+)#', $candidate, $matches) === 1) {
+                return $matches[1];
+            }
+        }
+
+        return null;
+    }
+
     public function getFormattedFileSizeAttribute(): ?string
     {
         if (! $this->file_size) {

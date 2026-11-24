@@ -6,6 +6,10 @@
     <title>{{ $seo['title'] ?? config('app.name', 'DarasaHub') }}</title>
     <meta name="description" content="{{ $seo['description'] ?? 'Kenya CBC Past Papers, Term Assessments and National Exams Directory.' }}">
     <meta name="robots" content="{{ $seo['robots'] ?? 'noindex, follow' }}">
+    <link rel="icon" href="{{ asset('favicon.ico') }}" sizes="any">
+    <link rel="icon" type="image/png" sizes="32x32" href="{{ asset('favicon-32x32.png') }}">
+    <link rel="icon" type="image/png" sizes="16x16" href="{{ asset('favicon-16x16.png') }}">
+    <link rel="apple-touch-icon" sizes="180x180" href="{{ asset('apple-touch-icon.png') }}">
     @if(!empty($seo['canonical']))
         <link rel="canonical" href="{{ $seo['canonical'] }}">
     @endif
@@ -41,9 +45,12 @@
     <header x-data="{ open: false }" class="sticky top-0 z-40 bg-white/95 backdrop-blur border-b border-slate-200">
         <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex items-center justify-between h-16">
-                <a href="/" class="flex items-center gap-2 font-bold text-lg text-brand-800 tracking-tight">
-                    <span class="inline-flex items-center justify-center w-8 h-8 rounded-lg bg-brand-700 text-white text-sm font-extrabold">DH</span>
-                    <span>{{ \App\Models\SiteSetting::getValue('site_name', 'DarasaHub') }}</span>
+                <a href="/" class="flex items-center gap-2 shrink-0" aria-label="{{ \App\Models\SiteSetting::getValue('site_name', 'DarasaHub') }} Home">
+                    <img
+                        src="{{ asset('images/logo.png') }}"
+                        alt="{{ \App\Models\SiteSetting::getValue('site_name', 'DarasaHub') }}"
+                        class="h-11 w-auto object-contain"
+                    >
                 </a>
 
                 <nav class="hidden md:flex items-center gap-6 text-sm font-medium text-slate-700" aria-label="Primary">
@@ -92,9 +99,15 @@
     <footer class="mt-16 bg-slate-900 text-slate-300 border-t border-slate-800">
         <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-12 grid gap-8 md:grid-cols-4 text-sm">
             <div class="md:col-span-2">
-                <p class="font-bold text-white text-base">{{ \App\Models\SiteSetting::getValue('site_name', 'DarasaHub') }}</p>
-                <p class="mt-2 text-slate-400 leading-relaxed">
-                    An organized, quality-verified directory of Kenyan CBC term assessments (PP1–Grade 12) and national examination past papers. No accounts required; minimal data collected.
+                <a href="/" class="inline-flex items-center rounded-lg bg-white px-2.5 py-1.5 shadow-sm">
+                    <img
+                        src="{{ asset('images/logo.png') }}"
+                        alt="{{ \App\Models\SiteSetting::getValue('site_name', 'DarasaHub') }}"
+                        class="h-10 w-auto object-contain"
+                    >
+                </a>
+                <p class="mt-3 text-slate-400 leading-relaxed">
+                    Darasahub Holdings Limited is a leading Education Technology (EdTech) company transforming the learning experience across Africa. We design, build, and manage digital platforms that make education more accessible, engaging, and efficient for learners, educators, and institutions.
                 </p>
             </div>
             <div>
