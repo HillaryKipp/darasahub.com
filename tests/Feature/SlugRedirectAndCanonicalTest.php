@@ -9,6 +9,7 @@ use App\Models\Paper;
 use App\Models\SlugHistory;
 use App\Models\Term;
 use Database\Seeders\CurriculumTaxonomySeeder;
+use Database\Seeders\LegacyWordpressRedirectSeeder;
 use Database\Seeders\SiteSettingSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -67,5 +68,28 @@ class SlugRedirectAndCanonicalTest extends TestCase
         $this->get('/grade-5/kiswahili/term-2/end-term-exams/original-paper-slug')
             ->assertStatus(301)
             ->assertRedirect('/grade-5/kiswahili/term-2/end-term-exams/updated-paper-slug');
+    }
+
+    public function test_legacy_wordpress_urls_with_trailing_slash_redirect_in_a_single_301_hop(): void
+    {
+        $this->seed(LegacyWordpressRedirectSeeder::class);
+
+        $expectedMappings = [
+            '/2026/01/08/kcse-kiswahili-past-papers/' => '/kcse/kiswahili-past-papers',
+            '/2026/01/07/kcse-mathematics-past-papers/' => '/kcse/mathematics-past-papers',
+            '/2026/01/08/kcse-business-studies-past-papers/' => '/kcse/business-studies-past-papers',
+            '/2026/01/08/kcse-chemistry-past-papers/' => '/kcse/chemistry-past-papers',
+            '/2025/12/16/kcse-past-papers-all-subjects-years/' => '/kcse',
+            '/2026/01/08/kcse-history-and-government-past-papers/' => '/kcse/history-and-government-past-papers',
+            '/2026/01/07/kcse-biology-past-papers/' => '/kcse/biology-past-papers',
+            '/2026/01/08/kcse-cre-past-papers/' => '/kcse/cre-past-papers',
+        ];
+
+        foreach ($expectedMappings as $legacyUrl => $canonicalUrl) {
+            $response = $this->get($legacyUrl);
+
+            $response->assertStatus(301);
+            $response->assertRedirect($canonicalUrl);
+        }
     }
 }

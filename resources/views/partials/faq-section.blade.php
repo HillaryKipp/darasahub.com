@@ -1,6 +1,6 @@
 @if(!empty($content) && $content->isApprovedForPublic() && count($content->visible_faqs) > 0)
 <section class="mt-12 bg-white border border-slate-200 rounded-xl p-6" aria-labelledby="faq-heading">
-    <h2 id="faq-heading" class="text-lg font-bold text-slate-900 mb-4">Frequently Asked Questions</h2>
+    <h2 id="faq-heading" class="text-lg font-bold text-slate-900 mb-4 text-center">Frequently Asked Questions</h2>
     <div class="divide-y divide-slate-200">
         @foreach($content->visible_faqs as $faq)
             <details class="py-3 group">

@@ -41,8 +41,14 @@ class SlugHistoryRedirectMiddleware
 
             $query = $request->getQueryString();
             $destination = $redirect->new_path.($query ? '?'.$query : '');
+            $status = $redirect->status_code ?: 301;
 
-            return redirect($destination, $redirect->status_code ?: 301);
+            $canonicalHost = config('app.canonical_host', 'darasahub.com');
+            if (app()->environment('production') && $canonicalHost) {
+                return redirect()->away('https://'.$canonicalHost.$destination, $status);
+            }
+
+            return redirect($destination, $status);
         }
 
         return $next($request);

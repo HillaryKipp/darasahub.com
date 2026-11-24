@@ -4,8 +4,8 @@
 <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
     @include('partials.breadcrumbs')
 
-    <header class="mb-6">
-        <div class="flex flex-wrap items-center gap-2 text-xs font-semibold uppercase tracking-wide text-brand-700 mb-2">
+    <header class="mb-6 text-center">
+        <div class="flex flex-wrap items-center justify-center gap-2 text-xs font-semibold uppercase tracking-wide text-brand-700 mb-2">
             <span>{{ $exam->name }}</span>
             <span class="text-slate-300">/</span>
             <span>{{ $area->name }}</span>
@@ -15,12 +15,12 @@
 
     {{-- Concise Intro Paragraph --}}
     @if(!empty($content) && $content->isApprovedForPublic() && !empty(trim((string) $content->intro)))
-        <div class="bg-white border border-slate-200 rounded-xl p-5 sm:p-6 mb-6 text-sm sm:text-base text-slate-700 leading-relaxed space-y-3">
+        <div class="bg-white border border-slate-200 rounded-xl p-5 sm:p-6 mb-6 text-sm sm:text-base text-slate-700 leading-relaxed space-y-3 text-center">
             {!! nl2br(e($content->intro)) !!}
         </div>
     @else
-        <div class="bg-white border border-slate-200 rounded-xl p-5 sm:p-6 mb-6 text-sm sm:text-base text-slate-700 leading-relaxed">
-            <p>
+        <div class="bg-white border border-slate-200 rounded-xl p-5 sm:p-6 mb-6 text-sm sm:text-base text-slate-700 leading-relaxed text-center">
+            <p class="max-w-3xl mx-auto">
                 Browse verified <strong>{{ $exam->name }} {{ $area->name }}</strong> past papers and marking schemes by year. Click any paper or year to open its full page with live preview and download options.
             </p>
         </div>
@@ -28,11 +28,11 @@
 
     {{-- Year Buttons (matching CBC button style) --}}
     @if($readyYears->isNotEmpty())
-        <section aria-labelledby="years-heading" class="bg-white border border-slate-200 rounded-xl p-5 mb-8">
+        <section aria-labelledby="years-heading" class="bg-white border border-slate-200 rounded-xl p-5 mb-8 text-center">
             <h2 id="years-heading" class="text-sm font-bold text-slate-900 mb-3">
                 Select Year
             </h2>
-            <div class="flex flex-wrap items-center gap-2.5">
+            <div class="flex flex-wrap items-center justify-center gap-2.5">
                 @foreach($readyYears as $yr)
                     @include('partials.status-check-button', [
                         'label' => (string) $yr,
@@ -74,7 +74,7 @@
         </div>
 
         @if($papers->hasPages())
-            <div class="mt-8">
+            <div class="mt-8 flex justify-center">
                 {{ $papers->links() }}
             </div>
         @endif
@@ -83,7 +83,7 @@
     {{-- Exam Subjects Grid (matching CBC Learning Areas grid) --}}
     @if(!empty($readySubjects) && $readySubjects->isNotEmpty())
         <section aria-labelledby="exam-subjects-heading" class="mt-10">
-            <h2 id="exam-subjects-heading" class="text-lg font-bold text-slate-900 mb-4">
+            <h2 id="exam-subjects-heading" class="text-lg font-bold text-slate-900 mb-4 text-center">
                 {{ $exam->name }} Subjects
             </h2>
             <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -91,7 +91,7 @@
                     @php($isCurrentSubject = $subject->id === $area->id)
                     <a
                         href="/{{ $exam->slug }}/{{ $subject->slug }}-past-papers"
-                        class="rounded-xl p-5 border transition block {{ $isCurrentSubject ? 'bg-brand-50/40 border-brand-600/60' : 'bg-white border-slate-200 hover:border-brand-600' }}"
+                        class="rounded-xl p-5 border transition flex flex-col items-center text-center {{ $isCurrentSubject ? 'bg-brand-50/40 border-brand-600/60' : 'bg-white border-slate-200 hover:border-brand-600' }}"
                     >
                         <h3 class="font-semibold text-slate-900">{{ $subject->name }}</h3>
                         <p class="mt-3 text-xs font-semibold text-brand-700">

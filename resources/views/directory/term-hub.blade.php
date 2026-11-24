@@ -7,8 +7,8 @@
 >
     @include('partials.breadcrumbs')
 
-    <header class="mb-6">
-        <div class="flex flex-wrap items-center gap-2 text-xs font-semibold uppercase tracking-wide text-brand-700 mb-2">
+    <header class="mb-6 text-center">
+        <div class="flex flex-wrap items-center justify-center gap-2 text-xs font-semibold uppercase tracking-wide text-brand-700 mb-2">
             <span>{{ $grade->name }}</span>
             <span class="text-slate-300">/</span>
             <span>{{ $area->name }}</span>
@@ -20,12 +20,12 @@
 
     {{-- Editorial / Contextual Paragraph --}}
     @if(!empty($content) && $content->isApprovedForPublic() && !empty(trim((string) $content->intro)))
-        <div class="bg-white border border-slate-200 rounded-xl p-5 sm:p-6 mb-6 text-sm sm:text-base text-slate-700 leading-relaxed space-y-3">
+        <div class="bg-white border border-slate-200 rounded-xl p-5 sm:p-6 mb-6 text-sm sm:text-base text-slate-700 leading-relaxed space-y-3 text-center">
             {!! nl2br(e($content->intro)) !!}
         </div>
     @else
-        <div class="bg-white border border-slate-200 rounded-xl p-5 sm:p-6 mb-6 text-sm sm:text-base text-slate-700 leading-relaxed">
-            <p>
+        <div class="bg-white border border-slate-200 rounded-xl p-5 sm:p-6 mb-6 text-sm sm:text-base text-slate-700 leading-relaxed text-center">
+            <p class="max-w-3xl mx-auto">
                 Explore all verified <strong>{{ $grade->name }} {{ $area->name }} {{ $term->name }}</strong> assessments in one place.
                 @if($totalPapers > 0)
                     There {{ $totalPapers === 1 ? 'is' : 'are' }} currently <strong>{{ $totalPapers }}</strong> verified {{ \Illuminate\Support\Str::plural('paper', $totalPapers) }} available below.
@@ -38,8 +38,8 @@
     @endif
 
     {{-- Exam Type Status Buttons (Opener, Midterm, End Term) --}}
-    <section aria-labelledby="exam-types-heading" class="bg-white border border-slate-200 rounded-xl p-5 mb-8">
-        <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
+    <section aria-labelledby="exam-types-heading" class="bg-white border border-slate-200 rounded-xl p-5 mb-8 text-center">
+        <div class="flex flex-col items-center gap-2 mb-4">
             <h2 id="exam-types-heading" class="text-sm font-bold text-slate-900">
                 {{ $term->name }} Assessment Types
             </h2>
@@ -55,7 +55,7 @@
             </span>
         </div>
 
-        <div class="flex flex-wrap items-center gap-2.5">
+        <div class="flex flex-wrap items-center justify-center gap-2.5">
             @foreach($examTypeSections as $section)
                 @php($examType = $section['exam_type'])
                 @include('partials.status-check-button', [
@@ -115,7 +115,7 @@
     {{-- Grade Learning Areas Grid (matching /{grade} hub) --}}
     @if(!empty($gradeLearningAreas) && $gradeLearningAreas->isNotEmpty())
         <section aria-labelledby="grade-subjects-heading" class="mt-10">
-            <h2 id="grade-subjects-heading" class="text-lg font-bold text-slate-900 mb-4">
+            <h2 id="grade-subjects-heading" class="text-lg font-bold text-slate-900 mb-4 text-center">
                 {{ $grade->name }} Learning Areas
             </h2>
             <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -123,7 +123,7 @@
                     @php($isCurrentArea = $gradeArea->id === $area->id)
                     <a
                         href="/{{ $grade->slug }}/{{ $gradeArea->slug }}"
-                        class="rounded-xl p-5 border transition block {{ $isCurrentArea ? 'bg-brand-50/40 border-brand-600/60' : 'bg-white border-slate-200 hover:border-brand-600' }}"
+                        class="rounded-xl p-5 border transition flex flex-col items-center text-center {{ $isCurrentArea ? 'bg-brand-50/40 border-brand-600/60' : 'bg-white border-slate-200 hover:border-brand-600' }}"
                     >
                         <h3 class="font-semibold text-slate-900">{{ $gradeArea->name }}</h3>
                         @if($gradeArea->pivot?->pathway)

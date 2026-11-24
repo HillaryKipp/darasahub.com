@@ -14,6 +14,7 @@ class DatabaseSeeder extends Seeder
             DriveLearningAreaSeeder::class,
             GradePastPaperSeeder::class,
             KcsePastPaperSeeder::class,
+            LegacyWordpressRedirectSeeder::class,
         ]);
 
         if (app()->environment('local', 'testing')) {

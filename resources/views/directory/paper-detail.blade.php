@@ -5,7 +5,7 @@
     @include('partials.breadcrumbs')
 
     <article class="bg-white border border-slate-200 rounded-2xl p-6 sm:p-8 shadow-sm">
-        <div class="flex flex-wrap items-center gap-2 text-xs mb-3">
+        <div class="flex flex-wrap items-center justify-center gap-2 text-xs mb-3">
             <span class="px-2.5 py-1 rounded-full bg-brand-50 text-brand-800 font-semibold">{{ $paper->year }}</span>
             <span class="px-2.5 py-1 rounded-full bg-slate-100 text-slate-700 font-medium">
                 {{ $paper->file_type === \App\Models\Paper::FILE_TYPE_MARKING_SCHEME ? 'Marking Scheme' : 'Question Paper' }}
@@ -18,9 +18,9 @@
             @endif
         </div>
 
-        <h1 class="text-2xl sm:text-3xl font-extrabold text-slate-900 leading-tight">{{ $paper->title }}</h1>
+        <h1 class="text-2xl sm:text-3xl font-extrabold text-slate-900 leading-tight text-center">{{ $paper->title }}</h1>
 
-        <dl class="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3 text-sm bg-slate-50 rounded-xl p-4 border border-slate-100">
+        <dl class="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3 text-sm text-center bg-slate-50 rounded-xl p-4 border border-slate-100">
             @if($paper->grade)
                 <div>
                     <dt class="text-xs text-slate-500">Grade / Level</dt>
@@ -64,12 +64,12 @@
         </dl>
 
         @if($paper->description)
-            <div class="mt-6 text-slate-700 leading-relaxed text-sm sm:text-base space-y-3">
+            <div class="mt-6 text-slate-700 leading-relaxed text-sm sm:text-base space-y-3 text-center max-w-3xl mx-auto">
                 {!! nl2br(e($paper->description)) !!}
             </div>
         @endif
 
-        <div class="mt-8 flex flex-wrap items-center gap-3">
+        <div class="mt-8 flex flex-wrap items-center justify-center gap-3">
             @if($paper->view_url && $paper->hasWorkingResource())
                 <a
                     href="{{ $paper->view_url }}"
@@ -110,14 +110,14 @@
 
             <a
                 href="/copyright-takedown?paper={{ $paper->id }}"
-                class="ml-auto text-xs text-slate-500 hover:text-red-700 hover:underline"
+                class="w-full text-center text-xs text-slate-500 hover:text-red-700 hover:underline mt-2"
             >
                 Report a problem / copyright issue
             </a>
         </div>
 
         @if($paper->hasWorkingResource() && $paper->preview_url)
-            <div x-data="{ showPreview: true }" class="mt-8 border-t border-slate-200 pt-6">
+            <div x-data="{ showPreview: true }" class="mt-8 border-t border-slate-200 pt-6 text-center">
                 <button
                     type="button"
                     @click="showPreview = !showPreview"
@@ -140,13 +140,13 @@
         @endif
     </article>
 
-    <div class="mt-8 flex items-center justify-between text-sm">
+    <div class="mt-8 flex items-center justify-center text-sm">
         <a href="{{ $parentLandingUrl }}" class="font-semibold text-brand-700 hover:underline">&larr; Back to {{ $parentLandingLabel }}</a>
     </div>
 
     @if($relatedPapers->isNotEmpty())
         <section class="mt-10" aria-labelledby="related-papers-heading">
-            <h2 id="related-papers-heading" class="text-lg font-bold text-slate-900 mb-4">Related Verified Papers</h2>
+            <h2 id="related-papers-heading" class="text-lg font-bold text-slate-900 mb-4 text-center">Related Verified Papers</h2>
             <div class="grid gap-4 md:grid-cols-2">
                 @foreach($relatedPapers as $related)
                     @include('partials.paper-card', ['paper' => $related])

@@ -5,9 +5,9 @@
     @include('partials.breadcrumbs')
 
     <div class="bg-white border border-slate-200 rounded-2xl p-6 sm:p-8 space-y-6">
-        <div>
+        <div class="text-center">
             <h1 class="text-2xl sm:text-3xl font-extrabold text-slate-900">Copyright, Takedown &amp; Problem Report</h1>
-            <p class="mt-2 text-sm text-slate-600 leading-relaxed">
+            <p class="mt-2 text-sm text-slate-600 leading-relaxed max-w-2xl mx-auto">
                 {{ $siteName }} respects intellectual property rights and curriculum accuracy. If you are a rights holder requesting removal of a document, or a learner/teacher reporting a broken link or mislabelled paper, submit the form below. Verified copyright takedown requests are prioritized promptly.
             </p>
         </div>

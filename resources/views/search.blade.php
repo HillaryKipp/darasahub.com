@@ -4,7 +4,7 @@
 <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
     @include('partials.breadcrumbs')
 
-    <h1 class="text-2xl sm:text-3xl font-extrabold text-slate-900 mb-5">Search Verified Exam Papers</h1>
+    <h1 class="text-2xl sm:text-3xl font-extrabold text-slate-900 mb-5 text-center">Search Verified Exam Papers</h1>
 
     <form action="/search" method="GET" class="bg-white border border-slate-200 rounded-xl p-4 sm:p-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-4 mb-6">
         <div class="sm:col-span-2 lg:col-span-4">
@@ -63,7 +63,7 @@
             <option value="legacy_844" @selected($filters['curriculum'] === 'legacy_844')>8-4-4 Legacy</option>
         </select>
 
-        <div class="sm:col-span-2 flex items-center gap-2">
+        <div class="sm:col-span-2 flex items-center justify-center sm:justify-start gap-2">
             <button type="submit" class="px-5 py-2 rounded-lg bg-brand-700 hover:bg-brand-800 text-white font-semibold text-sm transition">
                 Apply Filters
             </button>
@@ -77,7 +77,7 @@
 
     {{-- Active Filter Chips --}}
     @if(!empty($activeFilters))
-        <div class="flex flex-wrap items-center gap-2 mb-6">
+        <div class="flex flex-wrap items-center justify-center gap-2 mb-6">
             @foreach($activeFilters as $key => $label)
                 @php($without = collect(request()->query())->except([$key, 'page'])->all())
                 <a
@@ -91,12 +91,12 @@
         </div>
     @endif
 
-    <p class="text-sm text-slate-500 mb-4">
+    <p class="text-sm text-slate-500 mb-4 text-center">
         Showing {{ $papers->total() }} verified {{ \Illuminate\Support\Str::plural('paper', $papers->total()) }}
     </p>
 
     @if($papers->isEmpty())
-        <div class="bg-white border border-slate-200 rounded-xl p-6 text-sm text-slate-600">
+        <div class="bg-white border border-slate-200 rounded-xl p-6 text-sm text-slate-600 text-center">
             No verified papers matched your current search criteria. Try broadening your filters or browsing by grade on the <a href="/" class="text-brand-700 font-semibold hover:underline">homepage</a>.
         </div>
     @else
@@ -105,7 +105,7 @@
                 @include('partials.paper-card', ['paper' => $paper])
             @endforeach
         </div>
-        <div class="mt-8">
+        <div class="mt-8 flex justify-center">
             {{ $papers->links() }}
         </div>
     @endif

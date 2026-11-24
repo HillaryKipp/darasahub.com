@@ -30,7 +30,7 @@
 
     @if($popularReady->isNotEmpty())
         <div class="mt-12 text-left">
-            <h2 class="text-lg font-bold text-slate-900 mb-4">Popular Verified Papers</h2>
+            <h2 class="text-lg font-bold text-slate-900 mb-4 text-center">Popular Verified Papers</h2>
             <div class="grid gap-4 sm:grid-cols-2">
                 @foreach($popularReady as $paper)
                     @include('partials.paper-card', ['paper' => $paper])

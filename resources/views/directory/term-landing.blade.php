@@ -4,8 +4,8 @@
 <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
     @include('partials.breadcrumbs')
 
-    <header class="mb-6">
-        <div class="flex flex-wrap items-center gap-2 text-xs font-semibold uppercase tracking-wide text-brand-700 mb-2">
+    <header class="mb-6 text-center">
+        <div class="flex flex-wrap items-center justify-center gap-2 text-xs font-semibold uppercase tracking-wide text-brand-700 mb-2">
             <span>{{ $grade->name }}</span>
             <span class="text-slate-300">/</span>
             <span>{{ $area->name }}</span>
@@ -17,14 +17,14 @@
 
     {{-- Exam Type Check Buttons (Opener, Midterm, End Term) --}}
     @if(!empty($examTypeButtons))
-        <section aria-label="Assessment types" class="bg-white border border-slate-200 rounded-xl p-4 sm:p-5 mb-6">
-            <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
+        <section aria-label="Assessment types" class="bg-white border border-slate-200 rounded-xl p-4 sm:p-5 mb-6 text-center">
+            <div class="flex flex-col items-center gap-1.5 mb-3">
                 <span class="text-xs font-bold uppercase tracking-wide text-slate-600">{{ $term->name }} Assessments</span>
                 <a href="/{{ $grade->slug }}/{{ $area->slug }}/{{ $term->slug }}" class="text-xs font-semibold text-brand-700 hover:underline">
                     View all {{ $term->name }} exams together &rarr;
                 </a>
             </div>
-            <div class="flex flex-wrap items-center gap-2.5">
+            <div class="flex flex-wrap items-center justify-center gap-2.5">
                 @foreach($examTypeButtons as $btn)
                     @php($et = $btn['exam_type'])
                     @include('partials.status-check-button', [
@@ -42,12 +42,12 @@
 
     {{-- Readable Intro Paragraph --}}
     @if(!empty($content) && $content->isApprovedForPublic() && !empty(trim((string) $content->intro)))
-        <div class="bg-white border border-slate-200 rounded-xl p-5 sm:p-6 mb-8 text-sm sm:text-base text-slate-700 leading-relaxed space-y-3">
+        <div class="bg-white border border-slate-200 rounded-xl p-5 sm:p-6 mb-8 text-sm sm:text-base text-slate-700 leading-relaxed space-y-3 text-center">
             {!! nl2br(e($content->intro)) !!}
         </div>
     @else
-        <div class="bg-white border border-slate-200 rounded-xl p-5 sm:p-6 mb-8 text-sm sm:text-base text-slate-700 leading-relaxed">
-            <p>
+        <div class="bg-white border border-slate-200 rounded-xl p-5 sm:p-6 mb-8 text-sm sm:text-base text-slate-700 leading-relaxed text-center">
+            <p class="max-w-3xl mx-auto">
                 Access verified <strong>{{ $grade->name }} {{ $area->name }} {{ $term->name }} {{ $examType->name }}</strong> aligned to the Kenyan Competency-Based Curriculum (CBC).
                 @if($papers->total() > 0)
                     Below {{ $papers->total() === 1 ? 'is' : 'are' }} <strong>{{ $papers->total() }}</strong> verified {{ \Illuminate\Support\Str::plural('paper', $papers->total()) }} ready for revision and classroom assessment.
@@ -62,21 +62,21 @@
     {{-- Available Papers in Paragraph Layout --}}
     @if($papers->isNotEmpty())
         <section aria-labelledby="papers-list-heading">
-            <h2 id="papers-list-heading" class="text-lg font-bold text-slate-900 mb-4">
+            <h2 id="papers-list-heading" class="text-lg font-bold text-slate-900 mb-4 text-center">
                 Available Papers ({{ $papers->total() }})
             </h2>
 
             @include('partials.paper-paragraph-list', ['papers' => $papers->getCollection()])
 
             @if($papers->hasPages())
-                <div class="mt-8">
+                <div class="mt-8 flex justify-center">
                     {{ $papers->links() }}
                 </div>
             @endif
         </section>
     @endif
 
-    <div class="mt-8 pt-6 border-t border-slate-200 flex flex-wrap items-center justify-between gap-3 text-sm">
+    <div class="mt-8 pt-6 border-t border-slate-200 flex flex-wrap items-center justify-center gap-6 text-sm">
         <a href="/{{ $grade->slug }}/{{ $area->slug }}/{{ $term->slug }}" class="font-semibold text-brand-700 hover:underline">
             &larr; Back to all {{ $grade->name }} {{ $area->name }} {{ $term->name }} Exams
         </a>

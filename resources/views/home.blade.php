@@ -2,16 +2,16 @@
 
 @section('content')
     {{-- Hero & Search (Section 9) --}}
-    <section class="bg-gradient-to-br from-brand-900 via-brand-800 to-brand-700 text-white">
+    <section class="bg-gradient-to-br from-brand-900 via-brand-800 to-brand-700 text-white text-center">
         <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-16">
-            <h1 class="text-3xl sm:text-4xl font-extrabold tracking-tight max-w-3xl">
+            <h1 class="text-3xl sm:text-4xl font-extrabold tracking-tight max-w-3xl mx-auto">
                 Kenya CBC Past Papers, Term Assessments &amp; National Exams
             </h1>
-            <p class="mt-3 text-brand-100 max-w-2xl text-base sm:text-lg">
+            <p class="mt-3 text-brand-100 max-w-2xl mx-auto text-base sm:text-lg">
                 Find verified question papers and marking schemes from PP1 to Grade 12, plus KPSEA, KILEA, KJSEA, and KCSE past papers.
             </p>
 
-            <form action="/search" method="GET" class="mt-6 bg-white rounded-xl p-3 shadow-lg grid gap-2 sm:grid-cols-12 text-slate-900">
+            <form action="/search" method="GET" class="mt-7 max-w-4xl mx-auto bg-white rounded-xl p-3 shadow-lg grid gap-2 sm:grid-cols-12 text-slate-900 text-left">
                 <input
                     type="search"
                     name="q"
@@ -40,11 +40,11 @@
     <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-12">
         {{-- National Exams Quick-Links Grid --}}
         <section aria-labelledby="national-exams-heading">
-            <h2 id="national-exams-heading" class="text-xl font-bold text-slate-900 mb-4">National Examinations</h2>
+            <h2 id="national-exams-heading" class="text-xl sm:text-2xl font-extrabold text-slate-900 mb-5 text-center">National Examinations</h2>
             <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
                 @foreach($nationalExams as $item)
                     @php($exam = $item['exam'])
-                    <div class="bg-white border border-slate-200 rounded-xl p-5 flex flex-col justify-between">
+                    <div class="bg-white border border-slate-200 rounded-xl p-5 flex flex-col justify-between items-center text-center">
                         <div>
                             <span class="text-xs font-semibold uppercase tracking-wide text-brand-700">{{ $exam->curriculum === 'both' ? 'CBC & 8-4-4' : 'CBC' }}</span>
                             <h3 class="mt-1 text-lg font-bold text-slate-900">{{ $exam->name }}</h3>
@@ -77,7 +77,7 @@
                 }
             }"
         >
-            <div class="flex flex-col sm:flex-row sm:items-end justify-between gap-3 mb-5">
+            <div class="flex flex-col items-center text-center gap-3 mb-6">
                 <div>
                     <h2 id="cbc-grades-heading" class="text-xl sm:text-2xl font-extrabold text-slate-900">
                         CBC Exams &amp; Assessments (PP1 – Grade 12)
@@ -86,7 +86,7 @@
                         Select a grade below to expand learning areas and term exams.
                     </p>
                 </div>
-                <div class="flex flex-wrap items-center gap-2">
+                <div class="flex flex-wrap items-center justify-center gap-2">
                     <input
                         type="search"
                         x-model="filter"
@@ -199,7 +199,7 @@
             <div class="grid gap-8 lg:grid-cols-2">
                 @if($latestPapers->isNotEmpty())
                     <section>
-                        <div class="flex items-center justify-between mb-4">
+                        <div class="flex flex-col items-center text-center gap-1 mb-4">
                             <h2 class="text-lg font-bold text-slate-900">Latest Verified Papers</h2>
                             <a href="/latest" class="text-xs font-semibold text-brand-700 hover:underline">View all &rarr;</a>
                         </div>
@@ -213,7 +213,10 @@
 
                 @if($popularPapers->isNotEmpty())
                     <section>
-                        <h2 class="text-lg font-bold text-slate-900 mb-4">Most Downloaded Papers</h2>
+                        <div class="flex flex-col items-center text-center gap-1 mb-4">
+                            <h2 class="text-lg font-bold text-slate-900">Most Downloaded Papers</h2>
+                            <span class="text-xs text-slate-500">Top revision resources</span>
+                        </div>
                         <div class="space-y-3">
                             @foreach($popularPapers as $paper)
                                 @include('partials.paper-card', ['paper' => $paper])
@@ -225,11 +228,13 @@
         @endif
 
         {{-- Short Editorial Block --}}
-        <section class="bg-white border border-slate-200 rounded-xl p-6 text-sm text-slate-600 leading-relaxed space-y-2">
-            <h2 class="text-base font-bold text-slate-900">How DarasaHub Organizes CBC &amp; National Past Papers</h2>
-            <p>
-                Every assessment listed on DarasaHub is verified for curriculum alignment, source attribution, and working access before publication. Term-based school assessments are organized by grade, official KICD learning area, term, and exam type (Opener, Midterm, End Term), while national examinations (KPSEA, KILEA, KJSEA, and KCSE) are organized by exam, subject, and year with clear labels separating CBC and legacy 8-4-4 papers.
-            </p>
+        <section class="bg-white border border-slate-200 rounded-xl p-6 sm:p-8 text-sm text-slate-600 leading-relaxed text-center">
+            <div class="max-w-3xl mx-auto space-y-2">
+                <h2 class="text-base sm:text-lg font-bold text-slate-900">How DarasaHub Organizes CBC &amp; National Past Papers</h2>
+                <p>
+                    Every assessment listed on DarasaHub is verified for curriculum alignment, source attribution, and working access before publication. Term-based school assessments are organized by grade, official KICD learning area, term, and exam type (Opener, Midterm, End Term), while national examinations (KPSEA, KILEA, KJSEA, and KCSE) are organized by exam, subject, and year with clear labels separating CBC and legacy 8-4-4 papers.
+                </p>
+            </div>
         </section>
     </div>
 @endsection

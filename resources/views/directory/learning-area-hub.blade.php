@@ -4,19 +4,19 @@
 <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
     @include('partials.breadcrumbs')
 
-    <h1 class="text-2xl sm:text-3xl font-extrabold text-slate-900 mb-4">{{ $h1 }}</h1>
+    <h1 class="text-2xl sm:text-3xl font-extrabold text-slate-900 mb-4 text-center">{{ $h1 }}</h1>
 
     @include('partials.editorial-intro')
 
     @if($termsData->isNotEmpty())
         <section aria-labelledby="terms-heading" class="space-y-4">
-            <h2 id="terms-heading" class="text-lg font-bold text-slate-900">Terms &amp; Assessments</h2>
+            <h2 id="terms-heading" class="text-lg font-bold text-slate-900 text-center">Terms &amp; Assessments</h2>
             <div class="grid gap-5 md:grid-cols-3">
                 @foreach($termsData as $row)
                     @php($term = $row['term'])
-                    <div class="bg-white border border-slate-200 rounded-xl p-5 flex flex-col justify-between gap-4">
-                        <div>
-                            <div class="mb-3">
+                    <div class="bg-white border border-slate-200 rounded-xl p-5 flex flex-col justify-between items-center text-center gap-4">
+                        <div class="w-full">
+                            <div class="mb-3 flex justify-center">
                                 @include('partials.status-check-button', [
                                     'label' => $term->name.' Exams',
                                     'checked' => $row['available'],
@@ -26,7 +26,7 @@
                                 ])
                             </div>
 
-                            <div class="flex flex-wrap gap-2 pt-3 border-t border-slate-100">
+                            <div class="flex flex-wrap justify-center gap-2 pt-3 border-t border-slate-100">
                                 @foreach($row['exam_types'] as $etRow)
                                     @php($examType = $etRow['exam_type'])
                                     @include('partials.status-check-button', [

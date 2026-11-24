@@ -44,7 +44,7 @@
     {{-- Sticky Header (Section 9) --}}
     <header x-data="{ open: false }" class="sticky top-0 z-40 bg-white/95 backdrop-blur border-b border-slate-200">
         <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="flex items-center justify-between h-16">
+            <div class="flex items-center justify-between h-16 gap-4">
                 <a href="/" class="flex items-center gap-2 shrink-0" aria-label="{{ \App\Models\SiteSetting::getValue('site_name', 'DarasaHub') }} Home">
                     <img
                         src="{{ asset('images/logo.png') }}"
@@ -53,15 +53,18 @@
                     >
                 </a>
 
-                <nav class="hidden md:flex items-center gap-6 text-sm font-medium text-slate-700" aria-label="Primary">
+                <nav class="hidden md:flex flex-1 items-center justify-center gap-6 text-sm font-medium text-slate-700" aria-label="Primary">
                     <a href="/" class="hover:text-brand-700 transition">Home</a>
                     <a href="/kpsea" class="hover:text-brand-700 transition">KPSEA</a>
                     <a href="/kilea" class="hover:text-brand-700 transition">KILEA</a>
                     <a href="/kjsea" class="hover:text-brand-700 transition">KJSEA</a>
                     <a href="/kcse" class="hover:text-brand-700 transition">KCSE</a>
                     <a href="/latest" class="hover:text-brand-700 transition">Latest</a>
-                    <a href="/search" class="inline-flex items-center px-3 py-1.5 rounded-md bg-brand-50 text-brand-800 hover:bg-brand-100 transition">Search</a>
                 </nav>
+
+                <div class="hidden md:flex items-center shrink-0">
+                    <a href="/search" class="inline-flex items-center px-3.5 py-1.5 rounded-md bg-brand-50 text-brand-800 hover:bg-brand-100 text-sm font-semibold transition">Search</a>
+                </div>
 
                 <button
                     type="button"
@@ -80,7 +83,7 @@
 
         {{-- Mobile Menu --}}
         <div x-show="open" x-cloak class="md:hidden border-t border-slate-200 bg-white">
-            <nav class="px-4 py-3 space-y-2 text-sm font-medium text-slate-700" aria-label="Mobile navigation">
+            <nav class="px-4 py-3 space-y-2 text-sm font-medium text-slate-700 text-center" aria-label="Mobile navigation">
                 <a href="/" class="block py-1.5 hover:text-brand-700">Home</a>
                 <a href="/kpsea" class="block py-1.5 hover:text-brand-700">KPSEA</a>
                 <a href="/kilea" class="block py-1.5 hover:text-brand-700">KILEA</a>
@@ -97,8 +100,8 @@
     </main>
 
     <footer class="mt-16 bg-slate-900 text-slate-300 border-t border-slate-800">
-        <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-12 grid gap-8 md:grid-cols-4 text-sm">
-            <div class="md:col-span-2">
+        <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-12 grid gap-8 md:grid-cols-4 text-sm text-center">
+            <div class="md:col-span-2 flex flex-col items-center">
                 <a href="/" class="inline-flex items-center rounded-lg bg-white px-2.5 py-1.5 shadow-sm">
                     <img
                         src="{{ asset('images/logo.png') }}"
@@ -106,7 +109,7 @@
                         class="h-10 w-auto object-contain"
                     >
                 </a>
-                <p class="mt-3 text-slate-400 leading-relaxed">
+                <p class="mt-3 text-slate-400 leading-relaxed max-w-md mx-auto">
                     Darasahub Holdings Limited is a leading Education Technology (EdTech) company transforming the learning experience across Africa. We design, build, and manage digital platforms that make education more accessible, engaging, and efficient for learners, educators, and institutions.
                 </p>
             </div>
