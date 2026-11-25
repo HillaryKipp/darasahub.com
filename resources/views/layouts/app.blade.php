@@ -6,6 +6,9 @@
     <title>{{ $seo['title'] ?? config('app.name', 'DarasaHub') }}</title>
     <meta name="description" content="{{ $seo['description'] ?? 'Kenya CBC Past Papers, Term Assessments and National Exams Directory.' }}">
     <meta name="robots" content="{{ $seo['robots'] ?? 'noindex, follow' }}">
+    <meta name="google-site-verification" content="7DpjDN7wQg-2tRwXKkOenaxVjza6f3C3PUjtQYaPMfM">
+    <meta name="google-adsense-account" content="ca-pub-4521557051809255">
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-4521557051809255" crossorigin="anonymous"></script>
     <link rel="icon" href="{{ asset('favicon.ico') }}" sizes="any">
     <link rel="icon" type="image/png" sizes="32x32" href="{{ asset('favicon-32x32.png') }}">
     <link rel="icon" type="image/png" sizes="16x16" href="{{ asset('favicon-16x16.png') }}">
