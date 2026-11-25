@@ -90,4 +90,17 @@ class SeoAndSitemapTest extends TestCase
 
         $this->get($demo->url_path)->assertNotFound();
     }
+
+    public function test_sitemap_chunk_route_serves_generated_xml_and_404s_for_missing_chunks(): void
+    {
+        @unlink(public_path('sitemaps/sitemap-static.xml'));
+
+        $response = $this->get('/sitemaps/sitemap-static.xml');
+
+        $response->assertOk();
+        $response->assertHeader('Content-Type', 'application/xml; charset=UTF-8');
+        $response->assertSee('https://darasahub.com/latest', false);
+
+        $this->get('/sitemaps/sitemap-nonexistent.xml')->assertNotFound();
+    }
 }

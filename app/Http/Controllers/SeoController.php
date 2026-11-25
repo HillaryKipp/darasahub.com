@@ -42,4 +42,25 @@ class SeoController extends Controller
             'Content-Type' => 'application/xml; charset=UTF-8',
         ]);
     }
+
+    public function sitemapChunk(string $file, SitemapService $sitemapService): Response
+    {
+        if (! preg_match('/^sitemap-[a-z0-9-]+\.xml$/', $file)) {
+            abort(404);
+        }
+
+        $path = public_path('sitemaps'.DIRECTORY_SEPARATOR.$file);
+
+        if (! file_exists($path)) {
+            $sitemapService->generate();
+        }
+
+        if (! file_exists($path)) {
+            abort(404);
+        }
+
+        return response(file_get_contents($path) ?: '', 200, [
+            'Content-Type' => 'application/xml; charset=UTF-8',
+        ]);
+    }
 }

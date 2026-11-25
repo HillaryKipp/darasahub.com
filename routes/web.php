@@ -25,6 +25,9 @@ Route::get('/download/{paperId}', [DownloadController::class, 'download'])
     ->name('papers.download');
 Route::get('/robots.txt', [SeoController::class, 'robots'])->name('robots');
 Route::get('/sitemap.xml', [SeoController::class, 'sitemap'])->name('sitemap');
+Route::get('/sitemaps/{file}', [SeoController::class, 'sitemapChunk'])
+    ->where('file', 'sitemap-[a-z0-9-]+\.xml')
+    ->name('sitemap.chunk');
 
 // Legal, trust & takedown pages (Section 19)
 Route::get('/{page}', [LegalPageController::class, 'show'])
